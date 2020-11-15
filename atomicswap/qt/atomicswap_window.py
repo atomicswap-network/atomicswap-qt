@@ -706,6 +706,8 @@ class AtomicSwapWindow(QMainWindow):
                     self.asns = ASNSConnect()
                 except AssertionError as e:
                     return str(e)
+            self.asns_token = data["Token"]
+            self.asns_key = data["Key"]
             if data["Receive"]["Redeem"]:
                 return "This contract has been successful."
             self.send_coin_name = data["Send"]["Coin"]
