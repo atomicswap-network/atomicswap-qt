@@ -392,6 +392,7 @@ class AtomicSwapWindow(QMainWindow):
             self.statusBar().showMessage("Get redeem info is completed. Please press next button.")
             self.get_redeem_info_button.setDisabled(True)
             self.next_button_1.setEnabled(True)
+        self.statusBar().showMessage("Initiator is still in process...")
 
     def register_edited(self):
         try:
