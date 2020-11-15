@@ -405,37 +405,6 @@ class AtomicSwapWindow(QMainWindow):
         else:
             self.register_swap_button.setDisabled(True)
 
-    def redeem_edited(self):
-        if self.initiate_flag:
-            try:
-                reach_bool, secret_hash, value = auditcontract(self.i_p_contract.text().strip(),
-                                                               self.i_p_tx.text().strip(),
-                                                               self.receive_coind,
-                                                               False)
-                if secret_hash != sha256d(self.secret):
-                    raise
-                label_text = "Contract is Ok, (Your receive amount {} {})".format(str(value), self.receive_coind.unit)
-                self.i_p_contract_status_label.setText(label_text)
-            except Exception:
-                self.i_p_contract_status_label.setText("Contract isn't Ok")
-                self.next_button_1.setDisabled(True)
-                return
-            if not reach_bool:
-                self.statusBar().showMessage("Your input contract is over 24 hour from contract issue.")
-        else:
-            try:
-                extractsecret(self.redeem_tx.text().strip(),
-                              self.secret_hash.hex(),
-                              self.send_coind,
-                              False)
-                self.redeem_tx_status_label.setText("Transaction is Ok")
-            except Exception:
-                self.redeem_tx_status_label.setText("Transaction isn't Ok")
-                self.next_button_1.setDisabled(True)
-                return
-        self.next_button_1.setEnabled(True)
-        self.next_button_1.setDefault(True)
-
     def coind_check(self, send: bool, coin_name: str) -> Tuple[bool, str]:
         message_text = "send" if send else "receive"
         self.statusBar().showMessage("Make {} coin data...".format(message_text))
