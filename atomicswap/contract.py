@@ -160,11 +160,11 @@ def atomic_swap_contract(my_addr_bytes: bytes, to_addr_bytes: bytes, locktime: i
     # currencies that have different maximum data sizes.
     script.append(Opcodes.OP_SIZE)
     script.append(1)  # OP_DATA_1 - 1 + len([secretSize]) (0x01 - 0x01 + 1)
-    script.append(secretSize)
+    script.append(64)
     script.append(Opcodes.OP_EQUALVERIFY)
 
     # Require initiator's secret to be known to redeem the output.
-    script.append(Opcodes.OP_SHA256)
+    script.append(Opcodes.OP_HASH256)
     script.append(secretSize)  # OP_DATA_1 - 1 + len(bytes.fromhex(secretHash)) (0x01 - 0x01 + 0x20)
     script.append(secret_hash)
     script.append(Opcodes.OP_EQUALVERIFY)
