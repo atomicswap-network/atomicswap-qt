@@ -654,27 +654,13 @@ class AtomicSwapWindow(QMainWindow):
             send_contract_tx = ""
 
         try:
-            if self.initiate_flag:
-                _, _, receive_value = auditcontract(self.i_p_contract.text().strip(),
-                                                    self.i_p_tx.text().strip(),
-                                                    self.receive_coind)
-                receive_contract = self.i_p_contract.text().strip()
-                receive_contract_tx = self.i_p_tx.text().strip()
-            else:
-                _, _, receive_value = auditcontract(self.contract_box.text().strip(),
-                                                    self.contract_tx_box.text().strip(),
-                                                    self.receive_coind)
-                receive_contract = self.contract_box.text().strip()
-                receive_contract_tx = self.contract_tx_box.text().strip()
+            receive_contract = self.contract
+            receive_contract_tx = self.contract_tx
+            _, _, receive_value = auditcontract(receive_contract, receive_contract_tx, self.receive_coind)
         except Exception:
             receive_value = None
             receive_contract = ""
             receive_contract_tx = ""
-
-        try:
-            send_redeem = self.redeem_tx.text().strip()
-        except Exception:
-            send_redeem = ""
 
         try:
             receive_redeem = self.receive_tx.serialize_witness().hex()
@@ -690,8 +676,7 @@ class AtomicSwapWindow(QMainWindow):
                 "Coin": self.send_coin_name,
                 "Value": send_value,
                 "Contract": send_contract,
-                "Transaction": send_contract_tx,
-                "Redeem": send_redeem  # participator only
+                "Transaction": send_contract_tx
             },
             "Receive": {
                 "Coin": self.receive_coin_name,
