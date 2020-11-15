@@ -711,8 +711,6 @@ class AtomicSwapWindow(QMainWindow):
             check, error = self.coind_check(False, self.receive_coin_name)
             if not check:
                 return error
-            self.i_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
-            self.p_send_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
             self.secret_hash = binascii.a2b_hex(data["SecretHash"])
             if data["Type"] == "i":
                 self.initiate_flag = True
@@ -720,8 +718,8 @@ class AtomicSwapWindow(QMainWindow):
                 if sha256d(self.secret) != self.secret_hash:
                     return "Secret or SecretHash is missing!"
             else:
-                self.contract_box.setText(data["Receive"]["Contract"])
-                self.contract_tx_box.setText(data["Receive"]["Transaction"])
+                self.contract = data["Receive"]["Contract"]
+                self.contract_tx = data["Receive"]["Transaction"]
             contract = data["Send"]["Contract"]
             contract_bytes = binascii.a2b_hex(contract)
             fee_per_kb, min_fee_per_kb = self.send_coind.get_fee_per_byte()
@@ -732,10 +730,9 @@ class AtomicSwapWindow(QMainWindow):
             p2sh_addr = hash160_to_b58_address(p2sh_addr_hash, self.send_coind.p2sh)
             self.send_contract_tuple = built_tuple(contract_bytes, p2sh_addr, contract_tx.get_txid(),
                                                    contract_tx, 0, refund_tx, refund_fee)
-            self.contract_result.setPlainText("Contract: " + self.send_contract_tuple.contract.hex())
-            self.contract_result.append("Contract Transaction: " +
-                                        self.send_contract_tuple.contractTx.serialize_witness().hex())
             self.main_widget.setCurrentIndex(2)
+            if not self.initiate_flag:
+                self.redeem_ip.setCurrentIndex(1)
             self.back_button.setDisabled(True)
             self.next_button_1.setEnabled(True)
             return ""
