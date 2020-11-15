@@ -581,6 +581,8 @@ class AtomicSwapWindow(QMainWindow):
                 )
             if err:
                 status_bar_msg = "Error has occurred: {}".format(err)
+            if not self.initiate_flag:
+                self.redeem_ip.setCurrentIndex(1)
             self.back_button.setDisabled(True)
             self.next_button_1.setDisabled(True)
             self.db_set_data(self.make_db_data(0))
