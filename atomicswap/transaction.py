@@ -411,12 +411,12 @@ def atomic_swap_extract(contract: Union[bytes, list]) -> dict:
     if isinstance(contract, list):
         contract = unparse_script(contract)
     pushes = parse_script(contract)
-    standard_contract = [Opcodes.OP_IF, Opcodes.OP_SIZE, 1, Opcodes.OP_EQUALVERIFY, Opcodes.OP_SHA256,
+    standard_contract = [Opcodes.OP_IF, Opcodes.OP_SIZE, 1, Opcodes.OP_EQUALVERIFY, Opcodes.OP_HASH256,
                          32, Opcodes.OP_EQUALVERIFY, Opcodes.OP_DUP, Opcodes.OP_HASH160, 20, Opcodes.OP_ELSE,
                          4, Opcodes.OP_CHECKLOCKTIMEVERIFY, Opcodes.OP_DROP, Opcodes.OP_DUP, Opcodes.OP_HASH160,
                          20, Opcodes.OP_ENDIF, Opcodes.OP_EQUALVERIFY, Opcodes.OP_CHECKSIG]
     assert standard_contract == pushes["script"], "This isn't atomicswap contract!"
-    assert int.from_bytes(pushes["data"][0], "little") == 32, "This isn't atomicswap contract!"
+    assert int.from_bytes(pushes["data"][0], "little") == 64, "This isn't atomicswap contract!"
     secret_hash = pushes["data"][1]
     receiver_addr_hash = pushes["data"][2]
     locktime = int.from_bytes(pushes["data"][3], "little")
