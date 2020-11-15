@@ -35,7 +35,7 @@ from .transaction import (OutPoint, TxIn, TxOut, MsgTx, int_to_bytes, deserializ
 
 verify = True
 secretSize = 32
-redeemAtomicSwapSigScriptSize = 1 + 73 + 1 + 33 + 1 + 32 + 1
+redeemAtomicSwapSigScriptSize = 1 + 73 + 1 + 33 + 1 + 64 + 1
 refundAtomicSwapSigScriptSize = 1 + 73 + 1 + 33 + 1
 
 SigHashOld = 0x0
