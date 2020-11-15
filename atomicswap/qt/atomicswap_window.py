@@ -609,9 +609,7 @@ class AtomicSwapWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", "Fatal problem has occurred!" + "\n" + "Transaction is missing!",
                                      QMessageBox.Ok, QMessageBox.Ok)
             if self.initiate_flag:
-                err = self.asns.redeem_swap(
-                    self.asns_token, self.receive_tx.serialize_witness().hex(), self.selected_swap["key"]
-                )
+                err = self.asns.redeem_swap(self.asns_token, self.receive_tx.serialize_witness().hex(), self.asns_key)
             else:
                 err = self.asns.complete_swap(self.asns_token, self.receive_tx.serialize_witness().hex())
             if err:
