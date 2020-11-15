@@ -767,7 +767,6 @@ class SwapListView(QTreeView):
 
     def selected_in_column(self, column: int):
         items = self.selectionModel().selectedIndexes()
-        print(items)
         return list(x for x in items if x.column() == column)
 
     def update(self):
