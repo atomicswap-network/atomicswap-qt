@@ -262,7 +262,7 @@ class AtomicSwapWindow(QMainWindow):
         self.get_participator_button.clicked.connect(self.get_participator_info)
         self.get_participator_hbox.addWidget(self.get_participator_label)
         self.get_participator_hbox.addStretch(1)
-        self.get_participator_hbox.addWidget(self.get_participator_widget)
+        self.get_participator_hbox.addWidget(self.get_participator_button)
         self.get_redeem_info_widget = QWidget()
         self.get_redeem_info_hbox = QHBoxLayout(self.get_redeem_info_widget)
         self.get_redeem_info_label = QLabel("Please press get redeem info button until you can get it.")
@@ -273,7 +273,7 @@ class AtomicSwapWindow(QMainWindow):
         self.get_redeem_info_hbox.addWidget(self.get_redeem_info_button)
         self.redeem_ip.addWidget(self.get_participator_widget)
         self.redeem_ip.addWidget(self.get_redeem_info_widget)
-        self.redeem_vbox.addWidget(self.redeem_ip)
+        self.redeem_vbox.addLayout(self.redeem_ip)
         self.redeem_vbox.addStretch(1)
         self.main_widget.addWidget(self.redeem)
 
