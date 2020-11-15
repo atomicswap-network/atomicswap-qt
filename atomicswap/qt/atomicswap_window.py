@@ -701,6 +701,11 @@ class AtomicSwapWindow(QMainWindow):
         self.button_widget.setCurrentIndex(1)
         status = data["Status"]
         if status == 0 or status == 2:
+            if self.asns is None:
+                try:
+                    self.asns = ASNSConnect()
+                except AssertionError as e:
+                    return str(e)
             if data["Receive"]["Redeem"]:
                 return "This contract has been successful."
             self.send_coin_name = data["Send"]["Coin"]
