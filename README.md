@@ -1,4 +1,5 @@
 # atomicswap-qt
+[![SecHack365](https://img.shields.io/badge/SecHack365-2020-ffd700.svg)](https://sechack365.nict.go.jp/)
 ```
 License: MIT License
 Author: y-chan
