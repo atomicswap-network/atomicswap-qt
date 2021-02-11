@@ -406,7 +406,7 @@ class AtomicSwapWindow(QMainWindow):
         else:
             self.register_swap_button.setDisabled(True)
 
-    def coind_check(self, send: bool, coin_name: str) -> Tuple[bool, str]:
+    def coind_check(self, send: bool, coin_name: str) -> str:
         message_text = "send" if send else "receive"
         self.statusBar().showMessage("Make {} coin data...".format(message_text))
         try:
@@ -414,15 +414,15 @@ class AtomicSwapWindow(QMainWindow):
         except FileNotFoundError:
             error = "Coin folder not found for your select, please start {} wallet.".format(coin_name)
             self.statusBar().showMessage(error)
-            return False, error
+            return error
         except RestartWallet:
             error = ("Coin config file not found for your select, "
                      "so made it by this program. Please restart {} wallet.".format(coin_name))
             self.statusBar().showMessage(error)
-            return False, error
+            return error
         except GetConfigError as e:
             self.statusBar().showMessage(str(e))
-            return False, str(e)
+            return str(e)
         self.statusBar().showMessage("Connection check...({})".format(coin_name))
         try:
             version = coind.getnetworkinfo()["version"]
@@ -430,21 +430,21 @@ class AtomicSwapWindow(QMainWindow):
             if "backend is down or not responding" in str(e):
                 error = "Connection failed.({})".format(coin_name)
                 self.statusBar().showMessage(error)
-                return False, error
+                return error
             try:
                 version = coind.getinfo()["version"]
             except InvalidRPCError:
                 error = "Connection failed.({})".format(coin_name)
                 self.statusBar().showMessage(error)
-                return False, error
+                return error
             except KeyError:
                 error = "Can't get version from json.({})".format(coin_name)
                 self.statusBar().showMessage(error)
-                return False, error
+                return error
         except KeyError:
             error = "Can't get version from json.({})".format(coin_name)
             self.statusBar().showMessage(error)
-            return False, error
+            return error
         if req_ver <= version and coind.sign_wallet is False:
             coind.sign_wallet = True
         if send:
@@ -452,7 +452,7 @@ class AtomicSwapWindow(QMainWindow):
         else:
             self.receive_coind = coind
         self.statusBar().showMessage("Connection successful.({})".format(coin_name))
-        return True, ""
+        return ""
 
     def on_send_coin(self, text: str):
         split_list = text.split()
@@ -490,11 +490,11 @@ class AtomicSwapWindow(QMainWindow):
                 return
             if self.asns_token is None:
                 self.asns_token = self.asns.get_token()
-            check, _ = self.coind_check(True, self.send_coin_name)
-            if not check:
+            error = self.coind_check(True, self.send_coin_name)
+            if error != "":
                 return
-            check, _ = self.coind_check(False, self.receive_coin_name)
-            if not check:
+            error = self.coind_check(False, self.receive_coin_name)
+            if error != "":
                 return
             self.i_step1_label.setText("Step1. Please select swap from list below.")
             self.p_step1_label.setText(
@@ -710,11 +710,11 @@ class AtomicSwapWindow(QMainWindow):
                 return "This contract has been successful."
             self.send_coin_name = data["Send"]["Coin"]
             self.receive_coin_name = data["Receive"]["Coin"]
-            check, error = self.coind_check(True, self.send_coin_name)
-            if not check:
+            error = self.coind_check(True, self.send_coin_name)
+            if error != "":
                 return error
-            check, error = self.coind_check(False, self.receive_coin_name)
-            if not check:
+            error = self.coind_check(False, self.receive_coin_name)
+            if error != "":
                 return error
             self.secret_hash = binascii.a2b_hex(data["SecretHash"])
             if data["Type"] == "i":
