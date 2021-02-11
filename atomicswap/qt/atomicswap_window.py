@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QDesktopWidget, 
                              QComboBox, QLabel, QVBoxLayout, QButtonGroup, QRadioButton, QStackedWidget, QStackedLayout,
                              QMessageBox, QTreeView, QAbstractItemView, QHeaderView)
 from PyQt5.QtGui import QPixmap, QDoubleValidator, QStandardItemModel
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QMutex, QMutexLocker
 
 from enum import IntEnum
 
@@ -817,3 +817,72 @@ class SwapListView(QTreeView):
     def mouseDoubleClickEvent(self, item):
         """ダブルクリックすると値を編集できてしまうことに対する対策"""
         self.mouseReleaseEvent(item)
+
+
+class CoindCheckThread(QThread):
+    coind_check_message = pyqtSignal(str)
+    send_coind_setting = pyqtSignal(Coind)
+    receive_coind_setting = pyqtSignal(Coind)
+
+    def __init__(self):
+        super().__init__()
+        self.mutex = QMutex()
+        self.send = False
+        self.coin_name = ""
+
+    def __del__(self):
+        self.stop()
+        self.wait()
+
+    def set_params(self, send: bool, coin_name: str) -> None:
+        with QMutexLocker(self.mutex):
+            self.send = send
+            self.coin_name = coin_name
+
+    def run(self) -> None:
+        message_text = "send" if self.send else "receive"
+        self.coind_check_message.emit("Make {} coin data...".format(message_text))
+        try:
+            req_ver, coind = make_coin_data(self.coin_name)
+        except FileNotFoundError:
+            error = "Coin folder not found for your select, please start {} wallet.".format(self.coin_name)
+            self.coind_check_message.emit(error)
+            return
+        except RestartWallet:
+            error = ("Coin config file not found for your select, "
+                     "so made it by this program. Please restart {} wallet.".format(self.coin_name))
+            self.coind_check_message.emit(error)
+            return
+        except GetConfigError as e:
+            self.coind_check_message.emit(str(e))
+            return
+        self.coind_check_message.emit("Connection check...({})".format(self.coin_name))
+        try:
+            version = coind.getnetworkinfo()["version"]
+        except InvalidRPCError as e:
+            if "backend is down or not responding" in str(e):
+                error = "Connection failed.({})".format(self.coin_name)
+                self.coind_check_message.emit(error)
+                return
+            try:
+                version = coind.getinfo()["version"]
+            except InvalidRPCError:
+                error = "Connection failed.({})".format(self.coin_name)
+                self.coind_check_message.emit(error)
+                return
+            except KeyError:
+                error = "Can't get version from json.({})".format(self.coin_name)
+                self.coind_check_message.emit(error)
+                return
+        except KeyError:
+            error = "Can't get version from json.({})".format(self.coin_name)
+            self.coind_check_message.emit(error)
+            return
+        if req_ver <= version and coind.sign_wallet is False:
+            coind.sign_wallet = True
+        if self.send:
+            self.send_coind_setting.emit(coind)
+        else:
+            self.receive_coind_setting(coind)
+        self.coind_check_message.emit("Connection successful.({})".format(self.coin_name))
+        return
