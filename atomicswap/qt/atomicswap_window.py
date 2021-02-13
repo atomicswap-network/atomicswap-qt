@@ -34,7 +34,7 @@ from typing import Tuple, Optional, TYPE_CHECKING
 from atomicswap.asns import ASNSConnect
 from atomicswap.auditcontract import auditcontract
 from atomicswap.address import is_p2pkh, sha256d, hash160, hash160_to_b58_address, base_decode
-from atomicswap.coind import make_coin_data, GetConfigError, RestartWallet, InvalidRPCError
+from atomicswap.coind import make_coin_data, GetConfigError, RestartWallet, InvalidRPCError, Coind
 from atomicswap.initiate import initiate
 from atomicswap.participate import participate
 from atomicswap.extractsecret import extractsecret
@@ -49,7 +49,6 @@ import atomicswap
 import binascii
 
 if TYPE_CHECKING:
-    from atomicswap.coind import Coind
     from atomicswap.contract import built_tuple
     from atomicswap.transaction import MsgTx
 
@@ -73,6 +72,11 @@ class AtomicSwapWindow(QMainWindow):
         self.selected_swap = None  # type: dict
         self.send_coind = None  # type: Coind
         self.receive_coind = None  # type: Coind
+        self.coind_check_thread = CoindCheckThread()
+        self.coind_check_thread.coind_check_message.connect(lambda msg: self.statusBar().showMessage(msg))
+        self.coind_check_thread.send_coind_setting.connect(lambda coind: self.set_coind(True, coind))
+        self.coind_check_thread.receive_coind_setting.connect(lambda coind: self.set_coind(False, coind))
+        self.coind_check_thread.coind_check_failed.connect(self.coind_check_failed)
         self.initiate_flag = False
         self.register_flag = False
         self.secret = b""
@@ -295,6 +299,40 @@ class AtomicSwapWindow(QMainWindow):
         self.center()
         self.statusBar().showMessage("Ready")
 
+    def set_coind(self, send: bool, coind: Coind) -> None:
+        if send:
+            self.send_coind = coind
+            while self.coind_check_thread.isRunning():
+                continue
+            self.coind_check_thread.set_params(False, self.receive_coin_name)
+            self.coind_check_thread.start()
+        else:
+            self.receive_coind = coind
+            self.i_step1_label.setText("Step1. Please select swap from list below.")
+            self.p_step1_label.setText(
+                "Step1. Please input amount of {} you want, and".format(self.receive_coind.name) + " " +
+                "amount of {} you send.".format(self.send_coind.name)
+            )
+            try:
+                self.swap_list = self.asns.get_swap_list()
+            except Exception:
+                self.swap_list = {}
+            self.swap_list_view.update()
+            self.p_receive_amount_label.setText("Amount of {} you want".format(self.receive_coind.name))
+            self.p_send_amount_label.setText("Amount of {} you send".format(self.send_coind.name))
+            self.p_receive_amount_unit_label.setText(self.receive_coind.unit)
+            self.p_send_amount_unit_label.setText(self.send_coind.unit)
+            self.my_address = self.receive_coind.getnewaddress()
+            self.button_widget.setCurrentIndex(1)
+            self.p_receive_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
+            self.p_send_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
+            self.main_widget.setCurrentIndex(1)
+
+    def coind_check_failed(self) -> None:
+        self.start_next_button.setEnabled(True)
+        self.send_coin_combo.setEnabled(True)
+        self.receive_coin_combo.setEnabled(True)
+
     def initiate(self):
         assert self.main_widget.currentIndex() == 1
         self.initiate_flag = True
@@ -490,30 +528,12 @@ class AtomicSwapWindow(QMainWindow):
                 return
             if self.asns_token is None:
                 self.asns_token = self.asns.get_token()
-            error = self.coind_check(True, self.send_coin_name)
-            if error != "":
-                return
-            error = self.coind_check(False, self.receive_coin_name)
-            if error != "":
-                return
-            self.i_step1_label.setText("Step1. Please select swap from list below.")
-            self.p_step1_label.setText(
-                "Step1. Please input amount of {} you want, and".format(self.receive_coind.name) + " " +
-                "amount of {} you send.".format(self.send_coind.name)
-            )
-            try:
-                self.swap_list = self.asns.get_swap_list()
-            except Exception:
-                self.swap_list = {}
-            self.swap_list_view.update()
-            self.p_receive_amount_label.setText("Amount of {} you want".format(self.receive_coind.name))
-            self.p_send_amount_label.setText("Amount of {} you send".format(self.send_coind.name))
-            self.p_receive_amount_unit_label.setText(self.receive_coind.unit)
-            self.p_send_amount_unit_label.setText(self.send_coind.unit)
-            self.my_address = self.receive_coind.getnewaddress()
-            self.button_widget.setCurrentIndex(1)
-            self.p_receive_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
-            self.p_send_amount_box.setValidator(QDoubleValidator(0, 999999999999, self.send_coind.decimals))
+            self.start_next_button.setDisabled(True)
+            self.send_coin_combo.setDisabled(True)
+            self.receive_coin_combo.setDisabled(True)
+            self.coind_check_thread.set_params(True, self.send_coin_name)
+            self.coind_check_thread.start()
+            return
         elif page_number == 1:
             send_decimals = self.send_coind.decimals
             if self.initiate_flag:
@@ -624,6 +644,9 @@ class AtomicSwapWindow(QMainWindow):
         count = 1
         self.main_widget.setCurrentIndex(page_number - count)
         if page_number == 1:
+            self.start_next_button.setEnabled(True)
+            self.send_coin_combo.setEnabled(True)
+            self.receive_coin_combo.setEnabled(True)
             self.button_widget.setCurrentIndex(0)
         elif page_number == 3:
             self.back_button.setDisabled(True)
@@ -823,6 +846,7 @@ class CoindCheckThread(QThread):
     coind_check_message = pyqtSignal(str)
     send_coind_setting = pyqtSignal(Coind)
     receive_coind_setting = pyqtSignal(Coind)
+    coind_check_failed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -840,21 +864,23 @@ class CoindCheckThread(QThread):
             self.coin_name = coin_name
 
     def run(self) -> None:
+        if self.coin_name == "":
+            return
         message_text = "send" if self.send else "receive"
         self.coind_check_message.emit("Make {} coin data...".format(message_text))
         try:
             req_ver, coind = make_coin_data(self.coin_name)
         except FileNotFoundError:
             error = "Coin folder not found for your select, please start {} wallet.".format(self.coin_name)
-            self.coind_check_message.emit(error)
+            self.coind_check_failed_func(error)
             return
         except RestartWallet:
             error = ("Coin config file not found for your select, "
                      "so made it by this program. Please restart {} wallet.".format(self.coin_name))
-            self.coind_check_message.emit(error)
+            self.coind_check_failed_func(error)
             return
         except GetConfigError as e:
-            self.coind_check_message.emit(str(e))
+            self.coind_check_failed_func(str(e))
             return
         self.coind_check_message.emit("Connection check...({})".format(self.coin_name))
         try:
@@ -862,27 +888,31 @@ class CoindCheckThread(QThread):
         except InvalidRPCError as e:
             if "backend is down or not responding" in str(e):
                 error = "Connection failed.({})".format(self.coin_name)
-                self.coind_check_message.emit(error)
+                self.coind_check_failed_func(error)
                 return
             try:
                 version = coind.getinfo()["version"]
             except InvalidRPCError:
                 error = "Connection failed.({})".format(self.coin_name)
-                self.coind_check_message.emit(error)
+                self.coind_check_failed_func(error)
                 return
             except KeyError:
                 error = "Can't get version from json.({})".format(self.coin_name)
-                self.coind_check_message.emit(error)
+                self.coind_check_failed_func(error)
                 return
         except KeyError:
             error = "Can't get version from json.({})".format(self.coin_name)
-            self.coind_check_message.emit(error)
+            self.coind_check_failed_func(error)
             return
         if req_ver <= version and coind.sign_wallet is False:
             coind.sign_wallet = True
         if self.send:
             self.send_coind_setting.emit(coind)
         else:
-            self.receive_coind_setting(coind)
+            self.receive_coind_setting.emit(coind)
         self.coind_check_message.emit("Connection successful.({})".format(self.coin_name))
         return
+
+    def coind_check_failed_func(self, msg: str) -> None:
+        self.coind_check_message.emit(msg)
+        self.coind_check_failed.emit()
