@@ -28,6 +28,9 @@ from PyQt5.QtGui import QStandardItemModel, QPixmap
 
 from enum import IntEnum
 
+import base64
+import requests
+
 from atomicswap.auditcontract import auditcontract_print
 from atomicswap.initiate import initiate, initiate_print
 from atomicswap.participate import participate, participate_print
@@ -339,10 +342,14 @@ class MainWindow(QMainWindow):
         dd.exec_()
 
     def about_dialog(self):
+        sechack365_badge = str(
+            base64.b64encode(requests.get("https://img.shields.io/badge/SecHack365-2020-ffd700.svg").content)
+        )[2:]
         QMessageBox.about(self,
                           "About atomicswap-qt - atomicswap-qt",
                           "<u><i><h1 style=\"text-align:left\">atomicswap-qt</h1></i></u>" +
                           "<u><i><h1 style=\"text-align:right\">for the SecHack365 Demo </h1></i></u>" + "<br/>" +
+                          "<img src=\"data:image/svg;base64,{}\" alt=\"SecHack365\"/><br/>".format(sechack365_badge) +
                           "Copyright(c) 2011-2020 The Electrum Developers" + "<br/>" +
                           "Copyright(c) 2013-2020 The btcsuite developers" + "<br/>" +
                           "Copyright(c) 2015-2020 The Decred developers" + "<br/>" +
