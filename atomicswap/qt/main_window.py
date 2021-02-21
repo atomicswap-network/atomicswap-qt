@@ -355,9 +355,9 @@ class MainWindow(QMainWindow):
                           "* " + "Can use on the gui" + "<br/>" +
                           "* " + "Full compatible with decred/atomicswap" + "<br/><br/>" +
                           "This software is " +
-                          "<a href=\"https://github.com/y-chan/atomicswap-qt/blob/master/LICENSE\">" +
+                          "<a href=\"https://github.com/atomicswap-network/atomicswap-qt/blob/master/LICENSE\">" +
                           "MIT License</a>." + " " + "And " +
-                          "<a href=\"https://github.com/y-chan/atomicswap-qt\">OSS</a>.")
+                          "<a href=\"https://github.com/atomicswap-network/atomicswap-qt\">OSS</a>.")
 
     def coind_check(self, coin_name: str):
         self.statusBar().showMessage("Make coin data...")
