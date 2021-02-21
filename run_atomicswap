@@ -38,7 +38,7 @@ from atomicswap.util import get_path, resource_path
 
 def qt_window():
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(resource_path("qt", "icons", "icons8-swap.png")))
+    app.setWindowIcon(QIcon(resource_path("qt", "icons", "atomicswap-qt.png")))
     ex = MainWindow()
     sys.exit(app.exec_())
 
