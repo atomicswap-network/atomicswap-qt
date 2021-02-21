@@ -341,7 +341,8 @@ class MainWindow(QMainWindow):
     def about_dialog(self):
         QMessageBox.about(self,
                           "About atomicswap-qt - atomicswap-qt",
-                          "<u><i><h1>atomicswap-qt Version {}</h1></i></u>".format(full_version) + "<br/>" +
+                          "<u><i><h1 style=\"text-align:left\">atomicswap-qt</h1></i></u>" +
+                          "<u><i><h1 style=\"text-align:right\">for the SecHack365 Demo </h1></i></u>" + "<br/>" +
                           "Copyright(c) 2011-2020 The Electrum Developers" + "<br/>" +
                           "Copyright(c) 2013-2020 The btcsuite developers" + "<br/>" +
                           "Copyright(c) 2015-2020 The Decred developers" + "<br/>" +
