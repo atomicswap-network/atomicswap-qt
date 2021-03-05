@@ -46,6 +46,11 @@ from atomicswap.version import full_version
 
 import atomicswap
 
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .atomicswap_window import AtomicSwapWindow
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -299,7 +304,7 @@ class MainWindow(QMainWindow):
         asw = AtomicSwapWindow(self)
         asw.show()
 
-    def resume_atomicswap(self, data: dict, refund=False):
+    def resume_atomicswap(self, data: dict, refund=False) -> Optional[AtomicSwapWindow]:
         from .atomicswap_window import AtomicSwapWindow
         asw = AtomicSwapWindow(self)
         try:
@@ -319,7 +324,7 @@ class MainWindow(QMainWindow):
         asw = self.resume_atomicswap(data, True)
         if not asw:
             return
-        refund_tx = asw.send_contract_tuple.refund_tx
+        refund_tx = asw.send_contract_tuple.refundTx
         if not isinstance(refund_tx, MsgTx):
             return
         send_question = QMessageBox.question(self, "Question",
